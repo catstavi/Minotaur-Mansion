@@ -3,6 +3,7 @@
 # create parser that removes 'the' and 'a'/'an'
 # let user take actions unique to each room (climb the wall etc), and loop to
 # next room/back to current w/o a direction
+# for actions, let two word actions be understandable without '_'
 
 require "./createamap.rb"
 
@@ -29,26 +30,30 @@ class GameEngine
 
   def check_action(input)
     words = input.split(' ')
-    case words[0]
-    when "go"
-      go(words)
-    when "exit"
-      abort("You quitter!")
-    when "status"
-      puts "Gives player status"
-    when "look"
-      @my_dungeon.show_current_description
-      @my_dungeon.show_room_items
-    when "examine"
-      puts examine(words[1..words.length])
-    when "take"
-      puts take(words[1..words.length])
-    when "drop"
-      puts drop(words[1..words.length])
-    when "inventory"
-      @my_dungeon.player.show_inventory
+    if word_is_action(words[0])
+      action(words[0])
     else
-      puts "type 'go', or a command"
+      case words[0]
+      when "go"
+        go(words)
+      when "exit"
+        abort("You quitter!")
+      when "status"
+        puts "Gives player status"
+      when "look"
+        @my_dungeon.show_current_description
+        @my_dungeon.show_room_items
+      when "examine"
+        puts examine(words[1..words.length])
+      when "take"
+        puts take(words[1..words.length])
+      when "drop"
+        puts drop(words[1..words.length])
+      when "inventory"
+        @my_dungeon.player.show_inventory
+      else
+        puts "type 'go', or a command"
+      end
     end
   end
 
@@ -68,6 +73,19 @@ class GameEngine
     else
       return false
     end
+  end
+
+  def word_is_action(word)
+    actions = @my_dungeon.return_actions
+    if actions.include? word.to_sym
+      return true
+    else
+      return false
+    end
+  end
+
+  def action(word)
+    @my_dungeon.do(word.to_sym)
   end
 
   def examine(input)

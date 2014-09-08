@@ -6,8 +6,8 @@ class Dungeon
     @rooms = []
   end
 
-  def add_room(reference, name, desc, paths, items)
-    @rooms << Room.new(reference, name, desc, paths, items)
+  def add_room(reference, name, desc, paths, items, actions)
+    @rooms << Room.new(reference, name, desc, paths, items, actions)
   end
 
   def start(location)
@@ -26,7 +26,12 @@ class Dungeon
   def find_room_in_direction(direction)
     find_room_in_dungeon(@player.location).paths[direction]
   end
+  #
+  # def room_result_of_action(action)
+  #   @rooms.detect { |room| room.action == action }
+  #
 
+#If I'm going to use go for actions too I need to take out the text
   def go(direction)
     if find_room_in_direction(direction) == nil
       paths = find_room_in_dungeon(@player.location).paths.keys
@@ -37,6 +42,25 @@ class Dungeon
       show_current_description
     end
   end
+
+  def do(action)
+    location = find_room_in_dungeon(@player.location)
+    action_value = location.actions[action]
+    if action_value.is_a? Symbol
+      @player.location = action_value
+      show_current_description
+    elsif action_value.is_a? String
+      puts action_value
+    else
+      puts action_value
+      puts "Error. Action result is not a symbol or a string"
+    end
+  end
+
+  def return_actions
+    find_room_in_dungeon(@player.location).actions.keys
+  end
+
 
 #### item methods ###
   def room_item_array
@@ -91,18 +115,19 @@ class Dungeon
   end
 
   class Room
-    attr_accessor :reference, :name, :desc, :paths, :items
+    attr_accessor :reference, :name, :desc, :paths, :items, :actions
 
-    def initialize(reference, name, desc, paths, items)
+    def initialize(reference, name, desc, paths, items, actions)
       @reference = reference
       @name = name
       @desc= desc
       @paths = paths
       @items = items
+      @actions = actions
     end
 
     def full_description
-      "\n#{@name}\n #{@desc}."
+      "\n#{@name}\n #{@desc}"
     end
 
     def add_item_to_room(item, description)
