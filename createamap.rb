@@ -35,7 +35,7 @@ def make_this_dungeon(name)
 
       [:tearoom, "Tea Room", "A tea party room! yay!",
         { east: :gateway }, {tea: "Earl Grey. Nice.", teacup: "delicate and fine"},
-        {:smash "You smash one of the teacups. Why would you do that? Luckily there are some more."}]
+        {smash: "You smash one of the teacups. Why would you do that? Luckily there are some more."}]
 
         ]
 
