@@ -26,12 +26,7 @@ class Dungeon
   def find_room_in_direction(direction)
     find_room_in_dungeon(@player.location).paths[direction]
   end
-  #
-  # def room_result_of_action(action)
-  #   @rooms.detect { |room| room.action == action }
-  #
 
-#If I'm going to use go for actions too I need to take out the text
   def go(direction)
     if find_room_in_direction(direction) == nil
       paths = find_room_in_dungeon(@player.location).paths.keys
@@ -68,7 +63,7 @@ class Dungeon
   end
 
   def show_room_items
-    item_string = find_room_in_dungeon(@player.location).items.keys.join(", ")
+    item_string = room_item_array.join(", ")
     puts "Items in this room: #{item_string}"
   end
 
@@ -97,11 +92,12 @@ class Dungeon
 
 ###########################
   class Player
-    attr_accessor :name, :location, :inventory
+    attr_accessor :name, :location, :inventory, :status
 
     def initialize(player_name)
       @name = player_name
-      @inventory = {}
+      @inventory = {hat: "A knitted beanie your mom made for you. Looks good."}
+      @status = "strong and healthy."
     end
 
     def add_to_inventory(item, description)

@@ -1,9 +1,7 @@
 ### to-do
-# stop game from crashing when unset direction is picked
-# create parser that removes 'the' and 'a'/'an'
-# let user take actions unique to each room (climb the wall etc), and loop to
-# next room/back to current w/o a direction
+# create parser that removes 'the' and 'a'/'an', instead of checking each word
 # for actions, let two word actions be understandable without '_'
+# items should also have actions? (ex "put on hat") maybe we need an item class?
 
 require "./createamap.rb"
 
@@ -39,7 +37,7 @@ class GameEngine
       when "exit"
         abort("You quitter!")
       when "status"
-        puts "Gives player status"
+        puts check_status
       when "look"
         @my_dungeon.show_current_description
         @my_dungeon.show_room_items
@@ -84,6 +82,10 @@ class GameEngine
     end
   end
 
+  def check_status
+    "You are feeling #{@my_dungeon.player.status}"
+  end
+
   def action(word)
     @my_dungeon.do(word.to_sym)
   end
@@ -104,7 +106,7 @@ class GameEngine
         return "Oblivious to litter laws, you drop the #{word}."
       end
     end
-    return "It seems you already dropped that without noticing, as you can't find it anywhere."
+    return "You can't find that anywhere! How will you drop it!? You panic."
   end
 
   def take(input)
