@@ -117,6 +117,9 @@ class Player
 
 end
 
+# :items includes both items and scenery (everything intereactive)
+# takeable and nontakable
+
 class Room
   attr_accessor :reference, :name, :desc, :paths, :items, :actions
 
@@ -125,7 +128,9 @@ class Room
     @name = room_hash[:name]
     @desc= room_hash[:desc]
     @paths = room_hash[:paths]
+    @items = { }
     populate_items(room_hash[:items])
+    populate_scenerey(room_hash[:scenerey])
     @actions = room_hash[:actions]
   end
 
@@ -138,9 +143,14 @@ class Room
 ## and the value the actual item object
 
   def populate_items(item_array)
-    @items = Hash.new(0)
     item_array.each do |item|
       @items[item[:reference]] = Item.new(item)
+    end
+  end
+
+  def populate_scenery(scenery_array)
+    scenery_array.each do |thing|
+      @items[thing[:reference]] = Scenery.new(thing)
     end
   end
 
@@ -150,7 +160,7 @@ class Room
 
 end
 
-class Item
+class Interactive
   attr_accessor :reference, :name, :desc, :actions
 
   def initialize(info_hash)
@@ -158,6 +168,38 @@ class Item
     @name = info_hash[:name]
     @desc = info_hash[:desc]
     @actions = info_hash[:actions]
+  end
+
+end
+
+class Item < Interactive
+
+  def initialize
+    super
+    @takable = true
+  end
+
+end
+
+class Scenery < Interactive
+
+  def initialize
+    super
+    @takable = false
+  end
+
+end
+
+class Action
+  attr_accessor :reference, :desc, :path, :status_change, :special_check, :fail_desc
+
+  def initialize(action_hash)
+    @reference = action_hash[:reference]
+    @desc = action_hash[:desc]
+    @path = action_hash[:path]
+    @status_change = action_hash[:status_change]
+    @special_check = action_hash[:special_check]
+    @fail_desc = action_hash[:fail_desc]
   end
 
 end

@@ -35,6 +35,7 @@ class Map
   def self.maps
     # each array represents a set of rooms (a different map/game)
     # the starting room will be the first room in the array
+    # also there are arrays of items
 
   minotaur_mansion = [
         { reference: :gateway,
@@ -90,7 +91,6 @@ class Map
           actions: { }
         },
 
-
         { reference: :blockedgate,
           name: "Blocked Gate",
           desc: "the gate is locked",
@@ -106,25 +106,17 @@ class Map
           items: {tea: "Earl Grey. Nice.", teacup: "delicate and fine"},
           actions: {smash: "You smash one of the teacups. Why would you do that? Luckily there are some more."}
         }
-
       ]
-  #
-  # mm_items = [
-  #   { reference:
-  #     name:
-  #     desc:
-  #     actions:
-  #   }
-  #
-  # ]
 
-  cave_items = [
-    { reference: :gold,
-      name: "gold",
-      desc: "a few sparkling nuggest of gold",
-      actions: { }
-    },
+  largecave_items = [
+  { reference: :gold,
+    name: "gold",
+    desc: "a few sparkling nuggest of gold",
+    actions: { }
+  },
+  ]
 
+  smallcave_items = [
     { reference: :silver,
       name: "silver",
       desc: "three tarnished silver coins",
@@ -137,7 +129,7 @@ class Map
         name: "Large Cave",
         desc: "a large, cavernous cave",
         paths: { west: :smallcave },
-        items: cave_items,
+        items: largecave_items,
         actions: { }
       },
 
@@ -145,11 +137,10 @@ class Map
         name: "Small Cave",
         desc: "a small, claustrophobic cave",
         paths: { east: :largecave },
-        items: [ ],
+        items: smallcave_items,
         actions: { }
       }
     ]
-
 
 
   {minotaur_mansion: minotaur_mansion, caves: caves}
