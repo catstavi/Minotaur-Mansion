@@ -13,15 +13,30 @@ class GameEngine
   def play
     puts "Running an Adventure Game!"
     name = get_name
-    puts "Okay, #{name}, starting your game."
-    @my_dungeon = Dungeon.new_with_rooms(return_room_array, name)
-    @my_dungeon.start(:gateway)
+    map_key = choose_map(name)
+    @map = Map.new(Map.maps[map_key])
+    @my_dungeon = Dungeon.new_with_rooms(@map.room_array, name)
+    @my_dungeon.start(@map.start_room)
     while true
       print "> "
       action = gets.chomp
       check_action(action)
     end
   end
+
+  def choose_map(name)
+    puts "Okay, #{name}, what adventure would you like to have?"
+    puts "1. Minotaur Mansion"
+    puts "2. Caves"
+    print "> "
+    map_choice = gets.chomp
+    case map_choice
+    when "1" then return :minotaur_mansion
+    when "2" then return :caves
+    else puts "You need to chooce 1 or 2."
+    end
+  end
+
 
   # def create_rooms(dungeon, room_array)
   #   room_array.each { |hash| dungeon.add_room(hash) }

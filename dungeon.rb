@@ -1,5 +1,6 @@
 class Dungeon
   attr_accessor :player
+  attr_reader :rooms
 
   def initialize(player_name)
     @player = Player.new(player_name)
