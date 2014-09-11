@@ -2,6 +2,7 @@
 # create parser that removes 'the' and 'a'/'an', instead of checking each word
 # for actions, let two word actions be understandable without '_' (also items)
 # items should also have actions? (ex "put on hat") maybe we need an item class?
+# room-actions affecting items or status as well as location
 
 require "./createamap.rb"
 
@@ -50,7 +51,7 @@ class GameEngine
       when "inventory"
         @my_dungeon.player.show_inventory
       else
-        commands =['go (direction)', 'exit', 'status','inventory', 'look', 'examine (item)', 'take (item)', 'drop (item)']
+        commands =['go (direction)', 'exit', 'status', 'inventory', 'look', 'examine (item)', 'take (item)', 'drop (item)']
         commands = commands + @my_dungeon.return_actions
         puts "I don't understand. Try one of these: "
         puts commands.join(', ')
@@ -58,18 +59,18 @@ class GameEngine
     end
   end
 
-  def word_is_in_room(item)
+  def word_is_in_room(word)
     items = @my_dungeon.room_item_array
-    if items.include? item.to_sym
+    if items.include? word.to_sym
       return true
     else
       return false
     end
   end
 
-  def word_is_in_inventory(item)
+  def word_is_in_inventory(word)
     items = @my_dungeon.player.inventory.keys
-    if items.include? item.to_sym
+    if items.include? word.to_sym
       return true
     else
       return false
