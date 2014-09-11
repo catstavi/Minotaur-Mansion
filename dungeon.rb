@@ -1,10 +1,11 @@
 class Dungeon
-  attr_accessor :player
+  attr_accessor :player, :actions
   attr_reader :rooms
 
   def initialize(player_name)
     @player = Player.new(player_name)
     @rooms = []
+    add_actions(special_actions)
   end
 
   def self.new_with_rooms(room_array, player_name)
@@ -76,39 +77,65 @@ class Dungeon
 # takes item as symbol, all methods
   def show_item_desc(item)
     if @player.inventory.include?(item)
-      @player.inventory[item]
+      @player.inventory[item].desc
     else
-      find_room_in_dungeon(@player.location).items[item]
+      find_room_in_dungeon(@player.location).items[item].desc
     end
   end
 
-  def take_item(item)
+  def take_item(item_ref)
     location = find_room_in_dungeon(@player.location)
-    description = location.items[item]
-    @player.add_to_inventory(item, description)
-    location.items.delete(item)
+    item_obj = location.items[item_ref]
+    @player.add_to_inventory(item_ref, item_obj)
+    location.items.delete(item_ref)
   end
 
-  def drop_item(item)
+  def drop_item(item_ref)
     location = find_room_in_dungeon(@player.location)
-    description = location.items[item]
-    @player.inventory.delete(item)
-    location.add_item_to_room(item, description)
+    item_obj = location.items[item_ref]
+    @player.inventory.delete(item_ref)
+    location.add_item_to_room(item_ref, item_obj)
   end
+
+# adding actions to dungeon instead of player since player doesn't know about dungeon
+  def special_actions
+     [
+       {reference: :status,
+       desc: "You feel #{@player.status}."},
+      {reference: :inventory,
+       desc: @player.show_inventory},
+       {reference: :quit,
+       desc: "You quitter!",
+       result: abort("The End")},
+       {reference: :look,
+       desc: show_current_description + show_room_items},
+     ]
+  end
+
+  def add_actions(action_array)
+    action_array.each do |action|
+      @actions[action[:reference]] = Action.new(action)
+    end
+  end
+
+  def even_specialer_actions
+    [:take, :drop]
+  end
+
 end
 
 ###########################
 class Player
-  attr_accessor :name, :location, :inventory, :status
+  attr_accessor :name, :location, :inventory, :status, :actions
 
   def initialize(player_name)
     @name = player_name
-    @inventory = {hat: "A knitted beanie your mom made for you. Looks good."}
+    @inventory = { }
     @status = "strong and healthy."
   end
 
-  def add_to_inventory(item, description)
-    @inventory[item] = description
+  def add_to_inventory(item_ref, item_obj)
+    @inventory[item_ref] = item_obj
   end
 
   def show_inventory
@@ -116,6 +143,9 @@ class Player
   end
 
 end
+
+# :items includes both items and scenery (everything intereactive)
+# takeable and nontakable
 
 class Room
   attr_accessor :reference, :name, :desc, :paths, :items, :actions
@@ -125,7 +155,9 @@ class Room
     @name = room_hash[:name]
     @desc= room_hash[:desc]
     @paths = room_hash[:paths]
-    @items = room_hash[:items]
+    @items = { }
+    populate_items(room_hash[:items])
+    populate_scenerey(room_hash[:scenerey])
     @actions = room_hash[:actions]
   end
 
@@ -133,12 +165,29 @@ class Room
     "\n#{@name}\n #{@desc}"
   end
 
-  def add_item_to_room(item, description)
-    @items[item] = description
+## room_hash[:items] is an array of hashes full of item features.
+## each room will have @items which is a hash, the key set to the item reference
+## and the value the actual item object
+
+  def populate_items(item_array)
+    item_array.each do |item|
+      @items[item[:reference]] = Item.new(item)
+    end
   end
+
+  def populate_scenery(scenery_array)
+    scenery_array.each do |thing|
+      @items[thing[:reference]] = Scenery.new(thing)
+    end
+  end
+
+  def add_item_to_room(item_ref, item_obj)
+    @items[item_ref] = item_obj
+  end
+
 end
 
-class Item
+class Interactive
   attr_accessor :reference, :name, :desc, :actions
 
   def initialize(info_hash)
@@ -146,6 +195,39 @@ class Item
     @name = info_hash[:name]
     @desc = info_hash[:desc]
     @actions = info_hash[:actions]
+  end
+
+end
+
+class Item < Interactive
+
+  def initialize
+    super
+    @takable = true
+  end
+
+end
+
+class Scenery < Interactive
+
+  def initialize
+    super
+    @takable = false
+  end
+
+end
+
+class Action
+  attr_accessor :reference, :desc, :result, :status_change, :special_check, :fail_desc
+
+  def initialize(action_hash)
+    @reference = action_hash[:reference]
+    @desc = action_hash[:desc]
+    @result = action_hash[:result]
+    @status_change = action_hash[:status_change]
+    @special_check = action_hash[:special_check]
+    @fail_desc = action_hash[:fail_desc]
+    if @special_check == nil then @special_check = true
   end
 
 end

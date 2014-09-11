@@ -1,6 +1,6 @@
 require "./dungeon.rb"
 
-#  c&p when creating new room
+# c&p when creating new room
 #  { reference:
 #   name:
 #   desc:
@@ -8,23 +8,44 @@ require "./dungeon.rb"
 #   items:
 #   actions:
 # }
+#
+# c&p when adding a new item
+#
+# { reference:
+#   name:
+#   desc:
+#   actions:
+# }
+
+
 
 ########################
 
 class Map
 
-  attr_accessor :room_array, :start_room, :maps
+  attr_accessor :room_array, :start_room
 
   #starting room is always the first room in your room array
 
   def initialize(room_array)
     @room_array = room_array
     @start_room = room_array[0][:reference]
-  #  @@maps = {minotaur_mansion: minotaur_mansion, caves: caves}
   end
 
+  def generic_actions
+    {reference:
+    desc:
+    result:
+    status_change:
+    special_check:
+    fail_desc:
+    }
+
   def self.maps
-    # a list of hashes contianing info to make rooms and attributes
+    # each array represents a set of rooms (a different map/game)
+    # the starting room will be the first room in the array
+    # also there are arrays of items
+
   minotaur_mansion = [
         { reference: :gateway,
           name: "Gateway",
@@ -79,7 +100,6 @@ class Map
           actions: { }
         },
 
-
         { reference: :blockedgate,
           name: "Blocked Gate",
           desc: "the gate is locked",
@@ -95,15 +115,30 @@ class Map
           items: {tea: "Earl Grey. Nice.", teacup: "delicate and fine"},
           actions: {smash: "You smash one of the teacups. Why would you do that? Luckily there are some more."}
         }
-
       ]
+
+  largecave_items = [
+  { reference: :gold,
+    name: "gold",
+    desc: "a few sparkling nuggest of gold",
+    actions: { }
+  },
+  ]
+
+  smallcave_items = [
+    { reference: :silver,
+      name: "silver",
+      desc: "three tarnished silver coins",
+      actions: { }
+    }
+  ]
 
   caves = [
       { reference: :largecave,
         name: "Large Cave",
         desc: "a large, cavernous cave",
         paths: { west: :smallcave },
-        items: { gold: "a few sparkling nuggest of gold"},
+        items: largecave_items,
         actions: { }
       },
 
@@ -111,11 +146,13 @@ class Map
         name: "Small Cave",
         desc: "a small, claustrophobic cave",
         paths: { east: :largecave },
-        items: { silver: "three silver coins, piled behind a rock" },
+        items: smallcave_items,
         actions: { }
       }
     ]
 
+
   {minotaur_mansion: minotaur_mansion, caves: caves}
+
   end
 end
