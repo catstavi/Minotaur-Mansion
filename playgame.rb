@@ -4,7 +4,7 @@
 # items should also have actions? (ex "put on hat") maybe we need an item class?
 # room-actions affecting items or status as well as location
 #
-# start room should not have to be changed in game engine for each map
+
 
 require "./createamap.rb"
 
@@ -36,12 +36,6 @@ class GameEngine
     else puts "You need to chooce 1 or 2."
     end
   end
-
-
-  # def create_rooms(dungeon, room_array)
-  #   room_array.each { |hash| dungeon.add_room(hash) }
-  #   return dungeon
-  # end
 
   def get_name
     puts "What's your character name?"

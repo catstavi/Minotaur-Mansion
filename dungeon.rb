@@ -125,7 +125,7 @@ class Room
     @name = room_hash[:name]
     @desc= room_hash[:desc]
     @paths = room_hash[:paths]
-    @items = room_hash[:items]
+    @items = populate_items(room_hash[:items])
     @actions = room_hash[:actions]
   end
 
@@ -133,8 +133,11 @@ class Room
     "\n#{@name}\n #{@desc}"
   end
 
-  def add_item_to_room(item, description)
-    @items[item] = description
+  def populate_items(item_hash)
+    @items = Hash.new(0)
+    item_hash.each do |item|
+      @items[item[:reference]] = Item.new(item)
+    end
   end
 end
 
