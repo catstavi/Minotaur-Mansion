@@ -1,10 +1,11 @@
 class Dungeon
-  attr_accessor :player
+  attr_accessor :player, :actions
   attr_reader :rooms
 
   def initialize(player_name)
     @player = Player.new(player_name)
     @rooms = []
+    add_actions(special_actions)
   end
 
   def self.new_with_rooms(room_array, player_name)
@@ -95,11 +96,37 @@ class Dungeon
     @player.inventory.delete(item_ref)
     location.add_item_to_room(item_ref, item_obj)
   end
+
+# adding actions to dungeon instead of player since player doesn't know about dungeon
+  def special_actions
+     [
+       {reference: :status,
+       desc: "You feel #{@player.status}."},
+      {reference: :inventory,
+       desc: @player.show_inventory},
+       {reference: :quit,
+       desc: "You quitter!",
+       result: abort("The End")},
+       {reference: :look,
+       desc: show_current_description + show_room_items},
+     ]
+  end
+
+  def add_actions(action_array)
+    action_array.each do |action|
+      @actions[action[:reference]] = Action.new(action)
+    end
+  end
+
+  def even_specialer_actions
+    [:take, :drop]
+  end
+
 end
 
 ###########################
 class Player
-  attr_accessor :name, :location, :inventory, :status
+  attr_accessor :name, :location, :inventory, :status, :actions
 
   def initialize(player_name)
     @name = player_name
@@ -191,15 +218,16 @@ class Scenery < Interactive
 end
 
 class Action
-  attr_accessor :reference, :desc, :path, :status_change, :special_check, :fail_desc
+  attr_accessor :reference, :desc, :result, :status_change, :special_check, :fail_desc
 
   def initialize(action_hash)
     @reference = action_hash[:reference]
     @desc = action_hash[:desc]
-    @path = action_hash[:path]
+    @result = action_hash[:result]
     @status_change = action_hash[:status_change]
     @special_check = action_hash[:special_check]
     @fail_desc = action_hash[:fail_desc]
+    if @special_check == nil then @special_check = true
   end
 
 end
