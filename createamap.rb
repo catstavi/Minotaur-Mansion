@@ -117,7 +117,7 @@ class Map
   #   }
   #
   # ]
-  
+
   cave_items = [
     { reference: :gold,
       name: "gold",
@@ -145,7 +145,7 @@ class Map
         name: "Small Cave",
         desc: "a small, claustrophobic cave",
         paths: { east: :largecave },
-        items: { },
+        items: [ ],
         actions: { }
       }
     ]

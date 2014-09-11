@@ -76,24 +76,24 @@ class Dungeon
 # takes item as symbol, all methods
   def show_item_desc(item)
     if @player.inventory.include?(item)
-      @player.inventory[item]
+      @player.inventory[item].desc
     else
-      find_room_in_dungeon(@player.location).items[item]
+      find_room_in_dungeon(@player.location).items[item].desc
     end
   end
 
-  def take_item(item)
+  def take_item(item_ref)
     location = find_room_in_dungeon(@player.location)
-    description = location.items[item]
-    @player.add_to_inventory(item, description)
-    location.items.delete(item)
+    item_obj = location.items[item_ref]
+    @player.add_to_inventory(item_ref, item_obj)
+    location.items.delete(item_ref)
   end
 
-  def drop_item(item)
+  def drop_item(item_ref)
     location = find_room_in_dungeon(@player.location)
-    description = location.items[item]
-    @player.inventory.delete(item)
-    location.add_item_to_room(item, description)
+    item_obj = location.items[item_ref]
+    @player.inventory.delete(item_ref)
+    location.add_item_to_room(item_ref, item_obj)
   end
 end
 
@@ -103,12 +103,12 @@ class Player
 
   def initialize(player_name)
     @name = player_name
-    @inventory = {hat: "A knitted beanie your mom made for you. Looks good."}
+    @inventory = { }
     @status = "strong and healthy."
   end
 
-  def add_to_inventory(item, description)
-    @inventory[item] = description
+  def add_to_inventory(item_ref, item_obj)
+    @inventory[item_ref] = item_obj
   end
 
   def show_inventory
@@ -125,7 +125,7 @@ class Room
     @name = room_hash[:name]
     @desc= room_hash[:desc]
     @paths = room_hash[:paths]
-    @items = populate_items(room_hash[:items])
+    populate_items(room_hash[:items])
     @actions = room_hash[:actions]
   end
 
@@ -133,12 +133,21 @@ class Room
     "\n#{@name}\n #{@desc}"
   end
 
-  def populate_items(item_hash)
+## room_hash[:items] is an array of hashes full of item features.
+## each room will have @items which is a hash, the key set to the item reference
+## and the value the actual item object
+
+  def populate_items(item_array)
     @items = Hash.new(0)
-    item_hash.each do |item|
+    item_array.each do |item|
       @items[item[:reference]] = Item.new(item)
     end
   end
+
+  def add_item_to_room(item_ref, item_obj)
+    @items[item_ref] = item_obj
+  end
+
 end
 
 class Item
