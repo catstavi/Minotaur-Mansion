@@ -1,70 +1,87 @@
 require "./dungeon.rb"
 
+#  c&p when creating new room
+# { reference:
+#   name:
+#   desc:
+#   paths:
+#   items:
+#   actions:
+# }
+
 ########################
-
-def make_this_dungeon(name)
-
-  # a list of rooms and attributes
-
+def return_room_array
+  # a list of hashes contianing info to make rooms and attributes
   room_array = [
+      { reference: :gateway,
+        name: "Gateway",
+        desc: "A wall in front of you, and doors to the east and west",
+        paths: { north: :stonewall, east: :weaponsroom, south: :blockedgate, west: :tearoom },
+        items: { key: "a big brass key",
+                 trash: "some dirty trash",
+                 flower: "a red red rose"},
+        actions: { climb: "You'll have to get closer to the wall." }
+      },
 
-     [:gateway, "Gateway",
-      "A wall in front of you, and doors to the east and west",
-      { north: :stonewall, east: :weaponsroom, south: :blockedgate, west: :tearoom },
-      { key: "a big brass key", trash: "some dirty trash", flower: "a red red rose"},
-      { climb: "You'll have to get closer to the wall."} ],
+      { reference: :stonewall,
+        name: "Stone Wall",
+        desc: "a tall stone wall covered in ivy",
+        paths: { south: :gateway },
+        items: { }, #no items
+        actions: { climb: :walltop }
+      },
 
-      [:stonewall, "Stone Wall",
-      "a tall stone wall covered in ivy",
-      { south: :gateway},
-      {}, #no items
-      {climb: :walltop} ],
+      { reference: :walltop,
+        name: "Wall Top",
+        desc: "the top of the stone wall. Below you is a sloped ditch. There's no ivy on that side, so you'd have to jump. You could also climb back down to the Gate Room.",
+        paths: { }, #no direction paths
+        items: { }, #no items initialized
+        actions: {jump: :slopedditch, climb_down: :gateway}
+      },
 
-      [:walltop, "Wall Top",
-      "the top of the stone wall. Below you is a sloped ditch. There's no ivy on that side, so you'd have to jump. You could also climb back down to the Gate Room.",
-      {}, #no direction paths
-      {},
-      {jump: :slopedditch, climb_down: :gateway} ],
+      { reference: :slopedditch,
+        name: "Sloped Ditch",
+        desc: "You hurt your ankle jumping. You are in a sloped ditch with scrubby brush. There's a muddy creekbed.",
+        paths: { },
+        items: { },
+        actions: { }
+      },
 
-      [:slopedditch, "Sloped Ditch",
-      "You hurt your ankle jumping. You are in a sloped ditch with scrubby brush. There's a muddy creekbed.",
-      {},
-      {},
-      {} ],
+      { reference: :weaponsroom,
+        name: "Weapons Room",
+        desc: "A room full of weapons. There's a door to the east.",
+        paths: { east: :broomcloset, west: :gateway },
+        items: {sword: "a long, chipped sword",
+                axe: "a heavy battleaxe, stained with red",
+                staff: "A big gnarly stick. Maybe it belonged to a wizard!"},
+        actions: { }
+      },
 
-      [:weaponsroom, "Weapons Room",
-      "A room full of weapons. There's a door to the east.",
-      { east: :broomcloset, west: :gateway },
-      {sword: "a long, chipped sword", axe: "a heavy battleaxe, stained with red", staff: "A big gnarly stick. Maybe it belonged to a wizard!"},
-      {} ],
+      { reference: :broomcloset,
+        name: "Broom Closet",
+        desc: "a small room with brooms",
+        paths: { west: :weaponsroom },
+        items: { broom: "a fine straw broom",
+                 mop: "a dirty old mop" },
+        actions: { }
+      },
 
-      [:broomcloset, "Broom Closet",
-      "a small room with brooms",
-      { west: :weaponsroom},
-      {broom: "a fine straw broom", mop: "a dirty old mop"},
-      {} ],
 
-      [:blockedgate, "Blocked Gate",
-      "the gate is locked",
-      { north: :gateway },
-      {},
-      {} ],
+      { reference: :blockedgate,
+        name: "Blocked Gate",
+        desc: "the gate is locked",
+        paths: { north: :gateway },
+        items: { },
+        actions: { }
+      },
 
-      [:tearoom, "Tea Room",
-      "A tea party room! yay!",
-      { east: :gateway },
-      {tea: "Earl Grey. Nice.", teacup: "delicate and fine"},
-      {smash: "You smash one of the teacups. Why would you do that? Luckily there are some more."} ]
-        ]
+      { reference: :tearoom,
+        name: "Tea Room",
+        desc: "A tea party room! yay!",
+        paths: { east: :gateway },
+        items: {tea: "Earl Grey. Nice.", teacup: "delicate and fine"},
+        actions: {smash: "You smash one of the teacups. Why would you do that? Luckily there are some more."}
+      },
 
-  my_dungeon = Dungeon.new(name)
-  return create_rooms(my_dungeon, room_array)
-
-end
-
-def create_rooms(dungeon, room_array)
-  room_array.each do |ref, name, desc, paths, items, actions|
-    dungeon.add_room(ref, name, desc, paths, items, actions)
-  end
-  return dungeon
+    ]
 end

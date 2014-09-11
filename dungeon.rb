@@ -6,8 +6,14 @@ class Dungeon
     @rooms = []
   end
 
-  def add_room(reference, name, desc, paths, items, actions)
-    @rooms << Room.new(reference, name, desc, paths, items, actions)
+  def self.new_with_rooms(room_array, player_name)
+    my_dungeon = Dungeon.new(player_name)
+    room_array.each { |hash| my_dungeon.add_room(hash) }
+    return my_dungeon
+  end
+
+  def add_room(room_hash)
+    @rooms << Room.new(room_hash)
   end
 
   def start(location)
@@ -56,7 +62,6 @@ class Dungeon
     find_room_in_dungeon(@player.location).actions.keys
   end
 
-
 #### item methods ###
   def room_item_array
     find_room_in_dungeon(@player.location).items.keys
@@ -89,45 +94,57 @@ class Dungeon
     @player.inventory.delete(item)
     location.add_item_to_room(item, description)
   end
+end
 
 ###########################
-  class Player
-    attr_accessor :name, :location, :inventory, :status
+class Player
+  attr_accessor :name, :location, :inventory, :status
 
-    def initialize(player_name)
-      @name = player_name
-      @inventory = {hat: "A knitted beanie your mom made for you. Looks good."}
-      @status = "strong and healthy."
-    end
-
-    def add_to_inventory(item, description)
-      @inventory[item] = description
-    end
-
-    def show_inventory
-      puts "Inventory: " + @inventory.keys.join(', ')
-    end
-
+  def initialize(player_name)
+    @name = player_name
+    @inventory = {hat: "A knitted beanie your mom made for you. Looks good."}
+    @status = "strong and healthy."
   end
 
-  class Room
-    attr_accessor :reference, :name, :desc, :paths, :items, :actions
-
-    def initialize(reference, name, desc, paths, items, actions)
-      @reference = reference
-      @name = name
-      @desc= desc
-      @paths = paths
-      @items = items
-      @actions = actions
-    end
-
-    def full_description
-      "\n#{@name}\n #{@desc}"
-    end
-
-    def add_item_to_room(item, description)
-      @items[item] = description
-    end
+  def add_to_inventory(item, description)
+    @inventory[item] = description
   end
+
+  def show_inventory
+    puts "Inventory: " + @inventory.keys.join(', ')
+  end
+
+end
+
+class Room
+  attr_accessor :reference, :name, :desc, :paths, :items, :actions
+
+  def initialize(room_hash)
+    @reference = room_hash[:reference]
+    @name = room_hash[:name]
+    @desc= room_hash[:desc]
+    @paths = room_hash[:paths]
+    @items = room_hash[:items]
+    @actions = room_hash[:actions]
+  end
+
+  def full_description
+    "\n#{@name}\n #{@desc}"
+  end
+
+  def add_item_to_room(item, description)
+    @items[item] = description
+  end
+end
+
+class Item
+  attr_accessor :reference, :name, :desc, :actions
+
+  def initialize(info_hash)
+    @reference = info_hash[:reference]
+    @name = info_hash[:name]
+    @desc = info_hash[:desc]
+    @actions = info_hash[:actions]
+  end
+
 end

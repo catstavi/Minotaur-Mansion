@@ -3,6 +3,8 @@
 # for actions, let two word actions be understandable without '_' (also items)
 # items should also have actions? (ex "put on hat") maybe we need an item class?
 # room-actions affecting items or status as well as location
+#
+# start room should not have to be changed in game engine for each map
 
 require "./createamap.rb"
 
@@ -12,7 +14,7 @@ class GameEngine
     puts "Running an Adventure Game!"
     name = get_name
     puts "Okay, #{name}, starting your game."
-    @my_dungeon = make_this_dungeon(name)
+    @my_dungeon = Dungeon.new_with_rooms(return_room_array, name)
     @my_dungeon.start(:gateway)
     while true
       print "> "
@@ -20,6 +22,11 @@ class GameEngine
       check_action(action)
     end
   end
+
+  # def create_rooms(dungeon, room_array)
+  #   room_array.each { |hash| dungeon.add_room(hash) }
+  #   return dungeon
+  # end
 
   def get_name
     puts "What's your character name?"
