@@ -32,14 +32,14 @@ class Map
     @start_room = room_array[0][:reference]
   end
 
-  def generic_actions
-    {reference:
-    desc:
-    result:
-    status_change:
-    special_check:
-    fail_desc:
-    }
+  # def generic_actions
+  #   {reference:
+  #   desc:
+  #   result:
+  #   status_change:
+  #   special_check:
+  #   fail_desc:
+  #   }
 
   def self.maps
     # each array represents a set of rooms (a different map/game)

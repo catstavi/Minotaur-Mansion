@@ -5,7 +5,6 @@ class Dungeon
   def initialize(player_name)
     @player = Player.new(player_name)
     @rooms = []
-    add_actions(special_actions)
   end
 
   def self.new_with_rooms(room_array, player_name)
@@ -40,28 +39,63 @@ class Dungeon
       paths = find_room_in_dungeon(@player.location).paths.keys
       puts "You can't go that way. You can go: " + paths.join(', ')
     else
-      puts "You go #{direction.to_s}."
-      @player.location = find_room_in_direction(direction)
-      show_current_description
+      puts "You go #{direction}."
+      destination = find_room_in_direction(direction)
+      go_with_location(destination)
     end
   end
 
-  def do(action)
-    location = find_room_in_dungeon(@player.location)
-    action_value = location.actions[action]
-    if action_value.is_a? Symbol
-      @player.location = action_value
-      show_current_description
-    elsif action_value.is_a? String
-      puts action_value
+  def go_with_location(location)
+    puts "Player location is #{@player.location}"
+    show_current_description
+  end
+
+#ADD EXAMINE
+  def check_actions(w1, w2)
+    if w2 then w2 = w2.to_sym end
+  #  aciton = dict(w1) #has sets of words all paired to the same key, the action reference
+    case w1
+    when /status/
+      puts "You are feeling #{@player.status}."
+    when /inventory/
+      if @player.inventory_array.length > 0
+        puts "Inventory: #{@player.inventory_array.join(', ')}."
+      else
+        puts "You have nothing. You should really be more careful with your things."
+      end
+    when "exit", "quit", "end"
+      abort("You quitter!")
+    when /look/
+      puts show_current_description, show_room_items
+    when "take"
+      take_try(w2)
+    when "drop"
+      drop_item(w2)
+    when "go"
+      go(w2)
+    when ""
+      puts "Your indecision is painful."
     else
-      puts action_value
-      puts "Error. Action result is not a symbol or a string"
+      do_extra_action(w1.to_sym, w2)
     end
   end
 
-  def return_actions
-    find_room_in_dungeon(@player.location).actions.keys
+  def available_actions
+    location = find_room_in_dungeon(@player.location)
+    location.items.actions.merge(@players.inventory.actions)
+  end
+
+  def do_extra_action(w1, w2)
+    possible_actions = available_actions
+    if possible_actions[:special_check] == false
+      puts action[:fail_desc]
+    elsif action == nil
+      puts "You try but you can't."
+    else
+      if action[:desc] then puts action[:desc] end
+      if action[:status] then change_status(w2) end
+      if action[:path] then go(w2) end
+    end
   end
 
 #### item methods ###
@@ -70,11 +104,24 @@ class Dungeon
   end
 
   def show_room_items
-    item_string = room_item_array.join(", ")
-    puts "Items in this room: #{item_string}"
+    if room_item_array.length == 0
+      puts "There are no items here."
+    else
+      item_string = room_item_array.join(", ")
+      puts "Items in this room: #{item_string}"
+    end
   end
 
 # takes item as symbol, all methods
+
+  def word_is_in_room?(word)
+    if room_item_array.include? word.to_sym
+      return true
+    else
+      return false
+    end
+  end
+
   def show_item_desc(item)
     if @player.inventory.include?(item)
       @player.inventory[item].desc
@@ -83,55 +130,49 @@ class Dungeon
     end
   end
 
-  def take_item(item_ref)
+  def take_try(item_ref)
+    if word_is_in_room?(item_ref)
+      take_item(item_ref)
+    else
+      puts """
+You reach out for it, but your hands pass straight through.
+You must have been hallucinating.
+      """
+    end
+  end
+
+  def take_item(item)
     location = find_room_in_dungeon(@player.location)
+    puts "You take the #{item_ref}. Cool!"
     item_obj = location.items[item_ref]
     @player.add_to_inventory(item_ref, item_obj)
     location.items.delete(item_ref)
   end
 
-  def drop_item(item_ref)
+  def drop_try(item_ref)
+    if word_is_in_inventory?(item_ref)
+      drop_item(item_ref)
+    else
+      puts "take this from playgame"
+  end
+
+  def drop_item(item)
     location = find_room_in_dungeon(@player.location)
     item_obj = location.items[item_ref]
     @player.inventory.delete(item_ref)
     location.add_item_to_room(item_ref, item_obj)
   end
 
-# adding actions to dungeon instead of player since player doesn't know about dungeon
-  def special_actions
-     [
-       {reference: :status,
-       desc: "You feel #{@player.status}."},
-      {reference: :inventory,
-       desc: @player.show_inventory},
-       {reference: :quit,
-       desc: "You quitter!",
-       result: abort("The End")},
-       {reference: :look,
-       desc: show_current_description + show_room_items},
-     ]
-  end
-
-  def add_actions(action_array)
-    action_array.each do |action|
-      @actions[action[:reference]] = Action.new(action)
-    end
-  end
-
-  def even_specialer_actions
-    [:take, :drop]
-  end
-
 end
 
 ###########################
 class Player
-  attr_accessor :name, :location, :inventory, :status, :actions
+  attr_accessor :name, :location, :inventory, :status
 
   def initialize(player_name)
     @name = player_name
     @inventory = { }
-    @status = "strong and healthy."
+    @status = "strong and healthy"
   end
 
   def add_to_inventory(item_ref, item_obj)
@@ -139,7 +180,11 @@ class Player
   end
 
   def show_inventory
-    puts "Inventory: " + @inventory.keys.join(', ')
+    puts "Inventory: " + inventory_array.join(', ')
+  end
+
+  def inventory_array
+    @inventory.keys
   end
 
 end
@@ -157,7 +202,7 @@ class Room
     @paths = room_hash[:paths]
     @items = { }
     populate_items(room_hash[:items])
-    populate_scenerey(room_hash[:scenerey])
+    # populate_scenerey(room_hash[:scenerey])
     @actions = room_hash[:actions]
   end
 
@@ -175,11 +220,11 @@ class Room
     end
   end
 
-  def populate_scenery(scenery_array)
-    scenery_array.each do |thing|
-      @items[thing[:reference]] = Scenery.new(thing)
-    end
-  end
+  # def populate_scenery(scenery_array)
+  #   scenery_array.each do |thing|
+  #     @items[thing[:reference]] = Scenery.new(thing)
+  #   end
+  # end
 
   def add_item_to_room(item_ref, item_obj)
     @items[item_ref] = item_obj
@@ -201,10 +246,6 @@ end
 
 class Item < Interactive
 
-  def initialize
-    super
-    @takable = true
-  end
 
 end
 
@@ -227,7 +268,7 @@ class Action
     @status_change = action_hash[:status_change]
     @special_check = action_hash[:special_check]
     @fail_desc = action_hash[:fail_desc]
-    if @special_check == nil then @special_check = true
+    if @special_check == nil then @special_check = true end
   end
 
 end

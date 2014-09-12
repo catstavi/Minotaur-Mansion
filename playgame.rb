@@ -44,35 +44,36 @@ class GameEngine
   end
 
   def check_action(input)
-    words = input.split(' ')
-    if word_is_action(words[0])
-      action(words[0])
-    else
-      case words[0]
-      when "go"
-        go(words)
-      when "exit", "quit"
-        abort("You quitter!")
-      when "status"
-        puts check_status
-      when "look"
-        @my_dungeon.show_current_description
-        @my_dungeon.show_room_items
-      when "examine"
-        puts examine(words[1..words.length])
-      when "take"
-        puts take(words[1..words.length])
-      when "drop"
-        puts drop(words[1..words.length])
-      when "inventory"
-        @my_dungeon.player.show_inventory
-      else
-        commands =['go (direction)', 'exit', 'status', 'inventory', 'look', 'examine (item)', 'take (item)', 'drop (item)']
-        commands = commands + @my_dungeon.return_actions
-        puts "I don't understand. Try one of these: "
-        puts commands.join(', ')
-      end
-    end
+    words = input.downcase.split(' ')
+    @my_dungeon.check_actions(words[0], words[1])
+    # if word_is_action(words[0])
+    #   action(words[0])
+    # else
+    #   case words[0]
+    #   when "go"
+    #     go(words)
+    #   when "exit", "quit"
+    #     abort("You quitter!")
+    #   when "status"
+    #     puts check_status
+    #   when "look"
+    #     @my_dungeon.show_current_description
+    #     @my_dungeon.show_room_items
+    #   when "examine"
+    #     puts examine(words[1..words.length])
+    #   when "take"
+    #     puts take(words[1..words.length])
+    #   when "drop"
+    #     puts drop(words[1..words.length])
+    #   when "inventory"
+    #     @my_dungeon.player.show_inventory
+    #   else
+        # commands =['go (direction)', 'exit', 'status', 'inventory', 'look', 'examine (item)', 'take (item)', 'drop (item)']
+        # commands = commands + @my_dungeon.return_actions
+        # puts "I don't understand. Try one of these: "
+        # puts commands.join(', ')
+  #    end
+  #  end
   end
 
   def word_is_in_room(word)
