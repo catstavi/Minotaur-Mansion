@@ -16,6 +16,16 @@ require "./dungeon.rb"
 #   desc:
 #   actions:
 # }
+#
+#
+#c&p actions
+#{ reference: ,
+# desc: ,
+# path: ,
+# status_change: ,
+# special_check: ,
+# fail_desc: ,
+# }
 
 
 
@@ -131,6 +141,32 @@ class Map
       desc: "three tarnished silver coins",
       actions: { }
     }
+  ]
+
+  cave_actions = [
+    { reference: :jump,
+      desc: "You leap into the pitch black hole",
+      path: :bottom_of_hole,
+      status_change: "in pain",
+      special_check: true,
+      fail_desc: nil,
+      }
+
+      { reference: ,
+        desc: ,
+        path: ,
+        status_change: ,
+        special_check: ,
+        fail_desc: ,
+      }
+
+      { reference: :eat,
+        desc: ,
+        path: ,
+        status_change: ,
+        special_check: ,
+        fail_desc: ,
+        }
   ]
 
   caves = [

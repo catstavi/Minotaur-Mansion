@@ -7,36 +7,45 @@ class Dungeon
     @rooms = []
   end
 
+  #creates both a new dungeon and all the rooms, from a room array
   def self.new_with_rooms(room_array, player_name)
     my_dungeon = Dungeon.new(player_name)
     room_array.each { |hash| my_dungeon.add_room(hash) }
     return my_dungeon
   end
 
+  #adds a single room to the dungeon's room array from a hash filled with attributes
   def add_room(room_hash)
     @rooms << Room.new(room_hash)
   end
 
+  #set the starting location for the player
   def start(location)
     @player.location = location
     show_current_description
   end
 
+  #find the room object of the player location, and runs the description method
   def show_current_description
     puts find_room_in_dungeon(@player.location).full_description
   end
 
+  # uses detect to find the room object with the matching reference given
   def find_room_in_dungeon(reference)
     @rooms.detect { |room| room.reference == reference }
   end
 
+  # reach the room reference value of the direction key in the paths hash
+  # (of current room location)
+  # return the room reference
   def find_room_in_direction(direction)
     find_room_in_dungeon(@player.location).paths[direction]
   end
 
+  #takes a direction, find the current room's hash and where that path leads
   def go(direction)
     if find_room_in_direction(direction) == nil
-      paths = find_room_in_dungeon(@player.location).paths.keys
+      paths = possible_paths_array
       puts "You can't go that way. You can go: " + paths.join(', ')
     else
       puts "You go #{direction}."
@@ -45,12 +54,17 @@ class Dungeon
     end
   end
 
+  def possible_paths_array
+    find_room_in_dungeon(@player.location).paths.keys
+  end
+
+  #given a location (as a room object), sets the player there
   def go_with_location(location)
+    @player.location = location
     puts "Player location is #{@player.location}"
     show_current_description
   end
 
-#ADD EXAMINE
   def check_actions(w1, w2)
     if w2 then w2 = w2.to_sym end
   #  aciton = dict(w1) #has sets of words all paired to the same key, the action reference
@@ -67,10 +81,12 @@ class Dungeon
       abort("You quitter!")
     when /look/
       puts show_current_description, show_room_items
+    when "examine"
+      examine_try(w2)
     when "take"
       take_try(w2)
     when "drop"
-      drop_item(w2)
+      drop_try(w2)
     when "go"
       go(w2)
     when ""
@@ -89,7 +105,7 @@ class Dungeon
     possible_actions = available_actions
     if possible_actions[:special_check] == false
       puts action[:fail_desc]
-    elsif action == nil
+    elsif possible_actions[action] == nil
       puts "You try but you can't."
     else
       if action[:desc] then puts action[:desc] end
@@ -153,7 +169,8 @@ You must have been hallucinating.
     if word_is_in_inventory?(item_ref)
       drop_item(item_ref)
     else
-      puts "take this from playgame"
+      puts "You can't find that anywhere! How will you drop it!? You panic."
+    end
   end
 
   def drop_item(item)
@@ -161,6 +178,20 @@ You must have been hallucinating.
     item_obj = location.items[item_ref]
     @player.inventory.delete(item_ref)
     location.add_item_to_room(item_ref, item_obj)
+  end
+
+  def examine_try(item_ref)
+    if word_is_in_inventory?(item_ref)
+      examine_item(@player.inventory[item_ref])
+    elsif word_is_in_room?(item_ref)
+      examine_item(@room.items[item_ref])
+    else
+      puts "That's not an item here."
+    end
+  end
+
+  def examine_item(item_obj)
+    puts item_obj.desc
   end
 
 end
@@ -246,7 +277,6 @@ end
 
 class Item < Interactive
 
-
 end
 
 class Scenery < Interactive
@@ -259,7 +289,7 @@ class Scenery < Interactive
 end
 
 class Action
-  attr_accessor :reference, :desc, :result, :status_change, :special_check, :fail_desc
+  attr_accessor :reference, :desc, :path, :status_change, :special_check, :fail_desc
 
   def initialize(action_hash)
     @reference = action_hash[:reference]
@@ -270,5 +300,4 @@ class Action
     @fail_desc = action_hash[:fail_desc]
     if @special_check == nil then @special_check = true end
   end
-
 end
