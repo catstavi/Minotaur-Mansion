@@ -61,7 +61,7 @@ class Dungeon
   #given a location (as a room object), sets the player there
   def go_with_location(location)
     @player.location = location
-    puts "Player location is #{@player.location}"
+    find_room_in_dungeon(location)
     show_current_description
   end
 
@@ -70,13 +70,9 @@ class Dungeon
   #  aciton = dict(w1) #has sets of words all paired to the same key, the action reference
     case w1
     when /status/
-      puts "You are feeling #{@player.status}."
+      @player.show_status
     when /inventory/
-      if @player.inventory_array.length > 0
-        puts "Inventory: #{@player.inventory_array.join(', ')}."
-      else
-        puts "You have nothing. You should really be more careful with your things."
-      end
+      @player.show_inventory
     when "exit", "quit", "end"
       abort("You quitter!")
     when /look/
@@ -89,28 +85,58 @@ class Dungeon
       drop_try(w2)
     when "go"
       go(w2)
-    when ""
+    when nil
       puts "Your indecision is painful."
     else
       do_extra_action(w1.to_sym, w2)
     end
   end
 
-  def available_actions
+  #actions attributes are arrays of action objects, in items/scenery
+
+  def location_actions
+    all_location_actions = []
     location = find_room_in_dungeon(@player.location)
-    location.items.actions.merge(@players.inventory.actions)
+    location.items.values.each do |item|
+      all_location_actions += item.actions
+    end
+    return all_location_actions
   end
+
+  def inventory_actions
+    all_inventory_actions = []
+    @player.inventory.values.each do |item|
+      all_inventory_actions += item.actions
+    end
+    return all_inventory_actions
+  end
+
+  def available_actions
+    inventory_actions + location_actions
+  end
+
+  #should w2 trigger what item we are using? or scenery?
+  #parser that tosses articles and prepositions?
+  # and checks for actions that are two-word actions? "turn on" etc
 
   def do_extra_action(w1, w2)
     possible_actions = available_actions
-    if possible_actions[:special_check] == false
-      puts action[:fail_desc]
-    elsif possible_actions[action] == nil
-      puts "You try but you can't."
+    this_action = possible_actions.find { |action| action.reference == w1 }
+    if this_action == nil
+      commands =['go', 'exit', 'status', 'inventory', 'look', 'examine', 'take', 'drop']
+      commands = commands + (possible_actions.each { |ref| ref } )
+      puts "I don't understand. Try one of these: "
+      puts commands.join(', ')
+    elsif this_action.special_check == false
+      puts action.fail_desc
     else
-      if action[:desc] then puts action[:desc] end
-      if action[:status] then change_status(w2) end
-      if action[:path] then go(w2) end
+      if this_action.desc then puts this_action.desc end
+      if this_action.status_change
+         @player.status=(this_action.status_change)
+      end
+      if this_action.path
+        go_with_location(this_action.path)
+      end
     end
   end
 
@@ -131,18 +157,19 @@ class Dungeon
 # takes item as symbol, all methods
 
   def word_is_in_room?(word)
-    if room_item_array.include? word.to_sym
+    if room_item_array.include? word
       return true
     else
       return false
     end
   end
 
-  def show_item_desc(item)
-    if @player.inventory.include?(item)
-      @player.inventory[item].desc
+  def word_is_in_inventory?(word)
+    items = @player.inventory_array
+    if items.include? word
+      return true
     else
-      find_room_in_dungeon(@player.location).items[item].desc
+      return false
     end
   end
 
@@ -157,7 +184,7 @@ You must have been hallucinating.
     end
   end
 
-  def take_item(item)
+  def take_item(item_ref)
     location = find_room_in_dungeon(@player.location)
     puts "You take the #{item_ref}. Cool!"
     item_obj = location.items[item_ref]
@@ -175,16 +202,18 @@ You must have been hallucinating.
 
   def drop_item(item)
     location = find_room_in_dungeon(@player.location)
-    item_obj = location.items[item_ref]
-    @player.inventory.delete(item_ref)
-    location.add_item_to_room(item_ref, item_obj)
+    puts "Oblivious to litter laws, you drop the #{item}."
+    item_obj = @player.inventory[item]
+    location.add_item_to_room(item, item_obj)
+    @player.inventory.delete(item)
   end
 
   def examine_try(item_ref)
+    location = find_room_in_dungeon(@player.location)
     if word_is_in_inventory?(item_ref)
       examine_item(@player.inventory[item_ref])
     elsif word_is_in_room?(item_ref)
-      examine_item(@room.items[item_ref])
+      examine_item(location.items[item_ref])
     else
       puts "That's not an item here."
     end
@@ -211,11 +240,19 @@ class Player
   end
 
   def show_inventory
-    puts "Inventory: " + inventory_array.join(', ')
+    if inventory_array.length > 0
+      puts "Inventory: " + inventory_array.join(', ')
+    else
+      puts "You have nothing. You should really be more careful with your things."
+    end
   end
 
   def inventory_array
     @inventory.keys
+  end
+
+  def show_status
+    puts "You are feeling #{@status}"
   end
 
 end
@@ -224,7 +261,7 @@ end
 # takeable and nontakable
 
 class Room
-  attr_accessor :reference, :name, :desc, :paths, :items, :actions
+  attr_accessor :reference, :name, :desc, :paths, :items
 
   def initialize(room_hash)
     @reference = room_hash[:reference]
@@ -234,7 +271,7 @@ class Room
     @items = { }
     populate_items(room_hash[:items])
     # populate_scenerey(room_hash[:scenerey])
-    @actions = room_hash[:actions]
+    #@actions = Action.many_new(room_hash[:actions])
   end
 
   def full_description
@@ -245,9 +282,11 @@ class Room
 ## each room will have @items which is a hash, the key set to the item reference
 ## and the value the actual item object
 
+##whats the point of not just having the item object itself in the array? this might make more sense
+
   def populate_items(item_array)
     item_array.each do |item|
-      @items[item[:reference]] = Item.new(item)
+      @items[item[:reference]] = Interactive.new(item)
     end
   end
 
@@ -270,7 +309,7 @@ class Interactive
     @reference = info_hash[:reference]
     @name = info_hash[:name]
     @desc = info_hash[:desc]
-    @actions = info_hash[:actions]
+    @actions = Action.many_new(info_hash[:actions])
   end
 
 end
@@ -278,15 +317,15 @@ end
 class Item < Interactive
 
 end
-
-class Scenery < Interactive
-
-  def initialize
-    super
-    @takable = false
-  end
-
-end
+#
+# class Scenery < Interactive
+#
+#   def initialize
+#     super
+#     @takable = false
+#   end
+#
+# end
 
 class Action
   attr_accessor :reference, :desc, :path, :status_change, :special_check, :fail_desc
@@ -294,10 +333,17 @@ class Action
   def initialize(action_hash)
     @reference = action_hash[:reference]
     @desc = action_hash[:desc]
-    @result = action_hash[:result]
+    @path = action_hash[:path]
     @status_change = action_hash[:status_change]
     @special_check = action_hash[:special_check]
     @fail_desc = action_hash[:fail_desc]
-    if @special_check == nil then @special_check = true end
+    #if @special_check == nil then @special_check = true end
   end
+
+  def self.many_new(array_of_hashes)
+    array_of_hashes.collect do |hash|
+      Action.new(hash)
+    end
+  end
+
 end

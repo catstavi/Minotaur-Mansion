@@ -127,64 +127,99 @@ class Map
         }
       ]
 
-  largecave_items = [
-  { reference: :gold,
-    name: "gold",
-    desc: "a few sparkling nuggest of gold",
-    actions: { }
-  },
-  ]
 
-  smallcave_items = [
-    { reference: :silver,
-      name: "silver",
-      desc: "three tarnished silver coins",
-      actions: { }
-    }
-  ]
-
-  cave_actions = [
+  hole_actions = [
     { reference: :jump,
-      desc: "You leap into the pitch black hole",
+      desc: "You leap into the pitch black hole. Your leg twists painfully under you.",
       path: :bottom_of_hole,
-      status_change: "in pain",
-      special_check: true,
-      fail_desc: nil,
-      }
+      status_change: "pained. Your leg throbs dully.",
+      #special_check:,
+      fail_desc: nil
+      } ]
 
-      { reference: ,
-        desc: ,
-        path: ,
-        status_change: ,
-        special_check: ,
-        fail_desc: ,
-      }
+  wall_actions = [
+    { reference: :climb,
+      desc: "You scramble frantically back up the wall.",
+      path: :largecave,
+      status_change: nil,
+      #special_check:,
+      fail_desc: nil
+      } ]
 
-      { reference: :eat,
-        desc: ,
-        path: ,
-        status_change: ,
-        special_check: ,
-        fail_desc: ,
-        }
-  ]
+    gold_actions = [
+     { reference: :smoosh,
+        desc: "You smoosh the soft, smooshable gold",
+        #path: ,
+        #status_change: ,
+        #:special_check => (@player.inventory.keys.include? :gold),
+        fail_desc: "There's no gold for you to smoosh."
+      }
+    ]
+
+    # how to do a special check about inventory?
+
+    largecave_items = [
+    { reference: :gold,
+      name: "gold",
+      desc: "a few sparkling nuggets of gold",
+      actions: gold_actions
+    },
+    { reference: :hole,
+      name: "hole",
+      desc: "a deep, black hole. There are probably sharp rocks down there.",
+      actions: hole_actions
+    }
+    ]
+
+    smallcave_items = [
+      { reference: :silver,
+        name: "silver",
+        desc: "three tarnished silver coins",
+        actions: [ ]
+      }
+    ]
+
+    hole_items = [
+      { reference: :wall,
+        name: "the wall",
+        desc: "a steep sloping wall",
+        actions: wall_actions
+      }
+    ]
+  #     { reference: :eat,
+  #       desc: ,
+  #       path: ,
+  #       status_change: ,
+  #       special_check: ,
+  #       fail_desc: ,
+  #       }
+  # ]
 
   caves = [
       { reference: :largecave,
         name: "Large Cave",
-        desc: "a large, cavernous cave",
+        desc: "a large, cavernous cave, with a hole",
         paths: { west: :smallcave },
         items: largecave_items,
-        actions: { }
+        #actions: cave_actions
       },
 
       { reference: :smallcave,
         name: "Small Cave",
         desc: "a small, claustrophobic cave",
         paths: { east: :largecave },
-        items: smallcave_items,
-        actions: { }
+        items: smallcave_items
+        #actions: [ ]
+      },
+
+      { reference: :bottom_of_hole,
+        name: "Bottom of the Hole",
+        desc: "it's dark and the wall press in around you",
+        paths: { },
+        items: hole_items
+        #actions: [ ]
       }
+
     ]
 
 
