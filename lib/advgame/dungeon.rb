@@ -25,9 +25,14 @@ class Dungeon
     show_current_description
   end
 
+  def this_room
+    find_room_in_dungeon(@player.location)
+  end
+
   #find the room object of the player location, and runs the description method
   def show_current_description
-    puts find_room_in_dungeon(@player.location).full_description
+    puts this_room.full_description
+    puts this_room.show_items
   end
 
   # uses detect to find the room object with the matching reference given
@@ -39,7 +44,7 @@ class Dungeon
   # (of current room location)
   # return the room reference
   def find_room_in_direction(direction)
-    find_room_in_dungeon(@player.location).paths[direction]
+    this_room.paths[direction]
   end
 
   #takes a direction, find the current room's hash and where that path leads
@@ -55,7 +60,7 @@ class Dungeon
   end
 
   def possible_paths_array
-    find_room_in_dungeon(@player.location).paths.keys
+    this_room.paths.keys
   end
 
   #given a location (as a room object), sets the player there
@@ -67,7 +72,7 @@ class Dungeon
 
   def check_actions(w1, w2)
     if w2 then w2 = w2.to_sym end
-  #  aciton = dict(w1) #has sets of words all paired to the same key, the action reference
+  #  action = dict(w1) #has sets of words all paired to the same key, the action reference
     case w1
     when /status/
       @player.show_status
@@ -76,7 +81,7 @@ class Dungeon
     when "exit", "quit", "end"
       abort("You quitter!")
     when /look/
-      puts show_current_description, show_room_items
+      puts show_current_description
     when "examine"
       examine_try(w2)
     when "take"
@@ -96,8 +101,7 @@ class Dungeon
 
   def location_actions
     all_location_actions = []
-    location = find_room_in_dungeon(@player.location)
-    location.items.values.each do |item|
+    this_room.items.values.each do |item|
       all_location_actions += item.actions
     end
     return all_location_actions
@@ -130,70 +134,47 @@ class Dungeon
     elsif this_action.special_check == false
       puts action.fail_desc
     else
-      if this_action.desc then puts this_action.desc end
-      if this_action.status_change
-         @player.status=(this_action.status_change)
-      end
-      if this_action.path
-        go_with_location(this_action.path)
-      end
+      action_results(this_action)
     end
   end
+
+  def action_results(this_action)
+    if this_action.desc then puts this_action.desc end
+    if this_action.status_change
+       @player.status=(this_action.status_change)
+    end
+    if this_action.path
+      go_with_location(this_action.path)
+    end
+  end
+
 
 #### item methods ###
-  def room_item_array
-    find_room_in_dungeon(@player.location).items.keys
-  end
-
-  def show_room_items
-    if room_item_array.length == 0
-      puts "There are no items here."
-    else
-      item_string = room_item_array.join(", ")
-      puts "Items in this room: #{item_string}"
-    end
-  end
 
 # takes item as symbol, all methods
 
-  def word_is_in_room?(word)
-    if room_item_array.include? word
-      return true
-    else
-      return false
-    end
-  end
-
-  def word_is_in_inventory?(word)
-    items = @player.inventory_array
-    if items.include? word
-      return true
-    else
-      return false
-    end
-  end
-
   def take_try(item_ref)
-    if word_is_in_room?(item_ref)
-      take_item(item_ref)
-    else
+    if !(this_room.word_in_room?(item_ref))
       puts """
 You reach out for it, but your hands pass straight through.
 You must have been hallucinating.
       """
+    elsif this_room.items[item_ref].takeable == false
+      puts "You can't take that."
+    else
+      take_item(item_ref)
     end
   end
 
   def take_item(item_ref)
-    location = find_room_in_dungeon(@player.location)
     puts "You take the #{item_ref}. Cool!"
-    item_obj = location.items[item_ref]
+    item_obj = this_room.items[item_ref]
     @player.add_to_inventory(item_ref, item_obj)
-    location.items.delete(item_ref)
+    this_room.items.delete(item_ref)
   end
 
   def drop_try(item_ref)
-    if word_is_in_inventory?(item_ref)
+    if @player.word_in_inventory?(item_ref)
       drop_item(item_ref)
     else
       puts "You can't find that anywhere! How will you drop it!? You panic."
@@ -201,21 +182,19 @@ You must have been hallucinating.
   end
 
   def drop_item(item)
-    location = find_room_in_dungeon(@player.location)
     puts "Oblivious to litter laws, you drop the #{item}."
     item_obj = @player.inventory[item]
-    location.add_item_to_room(item, item_obj)
+    this_room.add_item_to_room(item, item_obj)
     @player.inventory.delete(item)
   end
 
   def examine_try(item_ref)
-    location = find_room_in_dungeon(@player.location)
-    if word_is_in_inventory?(item_ref)
+    if @player.word_in_inventory?(item_ref)
       examine_item(@player.inventory[item_ref])
-    elsif word_is_in_room?(item_ref)
-      examine_item(location.items[item_ref])
+    elsif this_room.word_in_room?(item_ref)
+      examine_item(this_room.items[item_ref])
     else
-      puts "That's not an item here."
+      puts "You carefully examine the concept of a #{item_ref} in your head."
     end
   end
 
@@ -247,6 +226,10 @@ class Player
     end
   end
 
+  def word_in_inventory?(word)
+    inventory_array.include? word.to_sym
+  end
+
   def inventory_array
     @inventory.keys
   end
@@ -269,9 +252,8 @@ class Room
     @desc= room_hash[:desc]
     @paths = room_hash[:paths]
     @items = { }
-    populate_items(room_hash[:items])
-    # populate_scenerey(room_hash[:scenerey])
-    #@actions = Action.many_new(room_hash[:actions])
+    item_array = room_hash[:items]
+    if item_array then populate_items(item_array) end
   end
 
   def full_description
@@ -286,46 +268,58 @@ class Room
 
   def populate_items(item_array)
     item_array.each do |item|
-      @items[item[:reference]] = Interactive.new(item)
+      @items[item[:reference]] = Item.new(item)
     end
   end
-
-  # def populate_scenery(scenery_array)
-  #   scenery_array.each do |thing|
-  #     @items[thing[:reference]] = Scenery.new(thing)
-  #   end
-  # end
 
   def add_item_to_room(item_ref, item_obj)
     @items[item_ref] = item_obj
   end
 
+  def word_in_room?(word)
+    item_array.include? word
+  end
+
+  def item_array
+    @items.keys
+  end
+
+  def show_items
+    if item_array.length == 0
+      puts "There's nothing here."
+    else
+      item_string = item_array.join(", ")
+      puts "Stuff in this room: #{item_string}"
+    end
+  end
+
 end
 
-class Interactive
-  attr_accessor :reference, :name, :desc, :actions
+# I think that inheritance doesn't make sense here, unless I am adding
+# methods that inherit to some things and not others.
+
+class Item
+  attr_accessor :reference, :name, :desc, :actions, :takeable
 
   def initialize(info_hash)
     @reference = info_hash[:reference]
     @name = info_hash[:name]
     @desc = info_hash[:desc]
-    @actions = Action.many_new(info_hash[:actions])
+    @actions = [ ]
+    @takeable = info_hash[:takeable]
+    action_array = info_hash[:actions]
+    if action_array then populate_actions(action_array) end
   end
 
+  def populate_actions(action_array)
+    action_array.each do |action|
+      @actions << Action.new(action)
+    end
+  end
+
+
 end
 
-class Item < Interactive
-
-end
-#
-# class Scenery < Interactive
-#
-#   def initialize
-#     super
-#     @takable = false
-#   end
-#
-# end
 
 class Action
   attr_accessor :reference, :desc, :path, :status_change, :special_check, :fail_desc
@@ -340,10 +334,9 @@ class Action
     #if @special_check == nil then @special_check = true end
   end
 
-  def self.many_new(array_of_hashes)
-    array_of_hashes.collect do |hash|
-      Action.new(hash)
-    end
-  end
+  # def interpret_check
+  #   if special_check == :in_inventory
+  #
+  # end
 
 end
