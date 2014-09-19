@@ -9,6 +9,20 @@ class CaveMap < Map
     @room_array = rooms
     super
   end
+  
+  def status_set
+      {:healthy => "strong and healthy",
+      :hurt => "You are pained.",
+      :hungry => "You stomach rumbles.",
+      :tired => "You're exhausted, dragging your feet on the ground."}
+  end
+
+  def player_hash
+    { :inventory => items[:inventory],
+      :status_set => status_set,
+      :starter_status => status_set[:healthy]
+      }
+  end
 
   def actions
      { :hole => [
@@ -36,8 +50,16 @@ class CaveMap < Map
           #status_change: ,
           #:special_check => (@player.inventory.keys.include? :gold),
           fail_desc: "There's no gold for you to smoosh." }
-        ]
+        ],
+
+      :hat => [
+        {reference: :wear,
+        desc: "You put on the hat. Looks good.",
+        #special_check: :holding
+        fail_desc: "You can't put on what you don't have."}
+      ]
       }
+
   end
 
       # how to do a special check about inventory?
@@ -57,13 +79,13 @@ class CaveMap < Map
         name: "hole",
         desc: "a deep, black hole. There are probably sharp rocks down there.",
         actions: actions[:hole],
-        takeable: false}
+        takeable: false }
       ],
 
       :smallcave => [
         { reference: :silver,
           name: "silver",
-          desc: "three tarnished silver coins",
+          desc: "a few tarnished silver coins",
           actions: actions[:silver],
           takeable: true }
       ],
@@ -73,7 +95,15 @@ class CaveMap < Map
           name: "the wall",
           desc: "a steep sloping wall",
           actions: actions[:wall],
-          takeable: false}
+          takeable: false }
+      ],
+
+      :inventory => [
+        { reference: :hat,
+        name: "hat",
+        desc: "a knitted hat your mother made you.",
+        actions: actions[:hat],
+        takeable: true }
       ]
     }
 
@@ -104,5 +134,6 @@ class CaveMap < Map
 
       ]
   end
+
 
 end

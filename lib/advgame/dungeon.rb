@@ -2,14 +2,14 @@ class Dungeon
   attr_accessor :player, :actions
   attr_reader :rooms
 
-  def initialize(player_name)
-    @player = Player.new(player_name)
+  def initialize(player_name, player_hash)
+    @player = Player.new(player_name, player_hash)
     @rooms = []
   end
 
   #creates both a new dungeon and all the rooms, from a room array
-  def self.new_with_rooms(room_array, player_name)
-    my_dungeon = Dungeon.new(player_name)
+  def self.new_with_rooms(room_array, player_name, player_hash)
+    my_dungeon = Dungeon.new(player_name, player_hash)
     room_array.each { |hash| my_dungeon.add_room(hash) }
     return my_dungeon
   end
@@ -23,6 +23,12 @@ class Dungeon
   def start(location)
     @player.location = location
     show_current_description
+  end
+
+  def self.pass_dungeon(dungeon_instance)
+    @rooms.each do |room|
+      room.pass_dungeon(dungeon_instance)
+    end
   end
 
   def this_room
@@ -131,8 +137,8 @@ class Dungeon
       commands = commands + (possible_actions.each { |ref| ref } )
       puts "I don't understand. Try one of these: "
       puts commands.join(', ')
-    elsif this_action.special_check == false
-      puts action.fail_desc
+    elsif this_action.interpret_check(w2) == false
+      puts this_action.fail_desc
     else
       action_results(this_action)
     end
@@ -148,6 +154,9 @@ class Dungeon
     end
   end
 
+  def interpret_check(check, w2)
+    true
+  end
 
 #### item methods ###
 
@@ -202,20 +211,29 @@ You must have been hallucinating.
     puts item_obj.desc
   end
 
+
 end
 
 ###########################
 class Player
-  attr_accessor :name, :location, :inventory, :status
+  attr_accessor :name, :location, :inventory, :status, :status_set
 
-  def initialize(player_name)
+  def initialize(player_name, player_hash)
     @name = player_name
     @inventory = { }
-    @status = "strong and healthy"
+    add_array_to_inventory(player_hash[:inventory])
+    @status_set = player_hash[:status_set]
+    @status = player_hash[:starter_status]
   end
 
   def add_to_inventory(item_ref, item_obj)
     @inventory[item_ref] = item_obj
+  end
+
+  def add_array_to_inventory(item_array)
+    item_array.each do |item|
+      add_to_inventory(item[:reference], Item.new(item))
+    end
   end
 
   def show_inventory
@@ -240,6 +258,8 @@ class Player
 
 end
 
+
+
 # :items includes both items and scenery (everything intereactive)
 # takeable and nontakable
 
@@ -254,6 +274,12 @@ class Room
     @items = { }
     item_array = room_hash[:items]
     if item_array then populate_items(item_array) end
+  end
+
+  def pass_dungeon(dungeon_instance)
+    @items.each do |item|
+      item.pass_dungeon(dungeon_instance)
+    end
   end
 
   def full_description
@@ -299,7 +325,7 @@ end
 # methods that inherit to some things and not others.
 
 class Item
-  attr_accessor :reference, :name, :desc, :actions, :takeable
+  attr_accessor :reference, :name, :desc, :actions, :takeable, :dungeon
 
   def initialize(info_hash)
     @reference = info_hash[:reference]
@@ -317,7 +343,12 @@ class Item
     end
   end
 
-
+  def pass_dungeon(dungeon_instance)
+    @dungeon = dungeon_instance
+    @actions.each do |action|
+      action.set_dungeon(dungeon_instance)
+    end
+  end
 end
 
 
@@ -334,9 +365,16 @@ class Action
     #if @special_check == nil then @special_check = true end
   end
 
-  # def interpret_check
-  #   if special_check == :in_inventory
-  #
-  # end
+  def set_dungeon(dungeon_instance)
+    @dungeon = dungeon_instance
+  end
+
+  def interpret_check(w2)
+    case @special_check
+    when :holding_this
+      @dungeon.player.word_in_inventory?(w2)
+    when :holdin
+    end
+  end
 
 end

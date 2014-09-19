@@ -10,7 +10,7 @@ class GameEngine
     puts "Running an Adventure Game!"
     name = get_name
     @map = choose_map(name)
-    @my_dungeon = Dungeon.new_with_rooms(@map.room_array, name)
+    @my_dungeon = Dungeon.new_with_rooms(@map.room_array, name, @map.player_hash)
     @my_dungeon.start(@map.start_room)
     while true
       print "> "
