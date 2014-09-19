@@ -1,17 +1,19 @@
-class Map
+module AdvGame
+  class Map
 
-  attr_accessor :room_array, :start_room
+    attr_accessor :room_array, :start_room
 
-  #starting room is always the first room in your room array
+    #starting room is always the first room in your room array
 
-  def initialize
-    @start_room = room_array[0][:reference]
+    def initialize
+      @start_room = room_array[0][:reference]
+    end
+
+    def self.set_rooms(room_array)
+      @room_array = room_array
+    end
+
   end
-
-  def self.set_rooms(room_array)
-    @room_array = room_array
-  end
-
 end
 
 
