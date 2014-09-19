@@ -9,12 +9,12 @@ class CaveMap < Map
     @room_array = rooms
     super
   end
-  
+
   def status_set
       {:healthy => "strong and healthy",
       :hurt => "You are pained.",
-      :hungry => "You stomach rumbles.",
-      :tired => "You're exhausted, dragging your feet on the ground."}
+      :hungry => "Your stomach rumbles.",
+      :tired => "You're exhausted."}
   end
 
   def player_hash
@@ -29,7 +29,7 @@ class CaveMap < Map
       { reference: :jump,
         desc: "You leap into the pitch black hole. Your leg twists painfully under you.",
         path: :darkpit,
-        status_change: "pained. Your leg throbs dully.",
+        status_change: :hurt,
         #special_check:,
         fail_desc: nil }
       ],
@@ -48,14 +48,14 @@ class CaveMap < Map
           desc: "You smoosh the soft, smooshable gold",
           #path: ,
           #status_change: ,
-          #:special_check => (@player.inventory.keys.include? :gold),
-          fail_desc: "There's no gold for you to smoosh." }
+          :special_check => :holding_this,
+          fail_desc: "You're not holding any gold." }
         ],
 
       :hat => [
         {reference: :wear,
         desc: "You put on the hat. Looks good.",
-        #special_check: :holding
+        special_check: :holding_this,
         fail_desc: "You can't put on what you don't have."}
       ]
       }

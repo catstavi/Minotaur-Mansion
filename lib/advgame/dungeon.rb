@@ -26,7 +26,7 @@ class Dungeon
   end
 
   def self.pass_dungeon(dungeon_instance)
-    @rooms.each do |room|
+    dungeon_instance.rooms.each do |room|
       room.pass_dungeon(dungeon_instance)
     end
   end
@@ -77,7 +77,8 @@ class Dungeon
   end
 
   def check_actions(w1, w2)
-    if w2 then w2 = w2.to_sym end
+    if w2==nil then w2 = " " end
+    w2 = w2.to_sym
   #  action = dict(w1) #has sets of words all paired to the same key, the action reference
     case w1
     when /status/
@@ -134,7 +135,7 @@ class Dungeon
     this_action = possible_actions.find { |action| action.reference == w1 }
     if this_action == nil
       commands =['go', 'exit', 'status', 'inventory', 'look', 'examine', 'take', 'drop']
-      commands = commands + (possible_actions.each { |ref| ref } )
+      commands = commands + (possible_actions.each { |action| action.reference } )
       puts "I don't understand. Try one of these: "
       puts commands.join(', ')
     elsif this_action.interpret_check(w2) == false
@@ -216,13 +217,13 @@ end
 
 ###########################
 class Player
-  attr_accessor :name, :location, :inventory, :status, :status_set
+  attr_accessor :name, :location, :inventory, :status, :status_array
 
   def initialize(player_name, player_hash)
     @name = player_name
     @inventory = { }
     add_array_to_inventory(player_hash[:inventory])
-    @status_set = player_hash[:status_set]
+    @status_array = player_hash[:status_set]
     @status = player_hash[:starter_status]
   end
 
@@ -245,6 +246,7 @@ class Player
   end
 
   def word_in_inventory?(word)
+    puts "word: #{word}"
     inventory_array.include? word.to_sym
   end
 
@@ -253,7 +255,7 @@ class Player
   end
 
   def show_status
-    puts "You are feeling #{@status}"
+    puts @status_array[@status]
   end
 
 end
@@ -277,7 +279,7 @@ class Room
   end
 
   def pass_dungeon(dungeon_instance)
-    @items.each do |item|
+    @items.values.each do |item|
       item.pass_dungeon(dungeon_instance)
     end
   end
@@ -371,9 +373,13 @@ class Action
 
   def interpret_check(w2)
     case @special_check
+    when nil
+      true
     when :holding_this
       @dungeon.player.word_in_inventory?(w2)
-    when :holdin
+    else
+      puts "You can't do that because the program doesn't know what #{@special_check} means."
+      return false
     end
   end
 
