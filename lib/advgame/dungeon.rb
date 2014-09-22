@@ -4,7 +4,7 @@ module AdvGame
     attr_reader :rooms
 
     def initialize(player_name, player_hash)
-      @player = Player.new(player_name, player_hash)
+      @player = AdvGame::Player.new(player_name, player_hash)
       @rooms = []
     end
 
@@ -17,7 +17,7 @@ module AdvGame
 
     #adds a single room to the dungeon's room array from a hash filled with attributes
     def add_room(room_hash)
-      @rooms << Room.new(room_hash)
+      @rooms << AdvGame::Room.new(room_hash)
     end
 
     #set the starting location for the player
@@ -56,12 +56,12 @@ module AdvGame
 
     #takes a direction, find the current room's hash and where that path leads
     def go(direction)
-      if find_room_in_direction(direction) == nil
+      destination = find_room_in_direction(direction)
+      if destination == nil
         paths = possible_paths_array
         puts "You can't go that way. You can go: " + paths.join(', ')
       else
         puts "You go #{direction}."
-        destination = find_room_in_direction(direction)
         go_with_location(destination)
       end
     end
@@ -127,6 +127,11 @@ module AdvGame
       inventory_actions + location_actions
     end
 
+    def commands_list
+      commands =['go', 'exit', 'status', 'inventory', 'look', 'examine', 'take', 'drop']
+      commands += (available_actions.each { |action| action.reference } )
+    end
+
     #should w2 trigger what item we are using? or scenery?
     #parser that tosses articles and prepositions?
     # and checks for actions that are two-word actions? "turn on" etc
@@ -135,10 +140,8 @@ module AdvGame
       possible_actions = available_actions
       this_action = possible_actions.find { |action| action.reference == w1 }
       if this_action == nil
-        commands =['go', 'exit', 'status', 'inventory', 'look', 'examine', 'take', 'drop']
-        commands = commands + (possible_actions.each { |action| action.reference } )
         puts "I don't understand. Try one of these: "
-        puts commands.join(', ')
+        puts commands_list.join(', ')
       elsif this_action.interpret_check(w2) == false
         puts this_action.fail_desc
       else
@@ -147,17 +150,9 @@ module AdvGame
     end
 
     def action_results(this_action)
-      if this_action.desc then puts this_action.desc end
-      if this_action.status_change
-         @player.status=(this_action.status_change)
-      end
-      if this_action.path
-        go_with_location(this_action.path)
-      end
-    end
-
-    def interpret_check(check, w2)
-      true
+      this_action.desc ? ( puts this_action.desc ) : nil
+      this_action.status_change ? @player.status=(this_action.status_change) : nil
+      this_action.path ? go_with_location(this_action.path) : nil
     end
 
   #### item methods ###
@@ -205,183 +200,12 @@ module AdvGame
       elsif this_room.word_in_room?(item_ref)
         examine_item(this_room.items[item_ref])
       else
-        puts "You carefully examine the concept of a #{item_ref} in your head."
+        puts "You carefully examine the concept of a #{item_ref} in your mind."
       end
     end
 
     def examine_item(item_obj)
       puts item_obj.desc
-    end
-
-
-  end
-
-  ###########################
-  class Player
-    attr_accessor :name, :location, :inventory, :status, :status_array
-
-    def initialize(player_name, player_hash)
-      @name = player_name
-      @inventory = { }
-      add_array_to_inventory(player_hash[:inventory])
-      @status_array = player_hash[:status_set]
-      @status = player_hash[:starter_status]
-    end
-
-    def add_to_inventory(item_ref, item_obj)
-      @inventory[item_ref] = item_obj
-    end
-
-    def add_array_to_inventory(item_array)
-      item_array.each do |item|
-        add_to_inventory(item[:reference], Item.new(item))
-      end
-    end
-
-    def show_inventory
-      if inventory_array.length > 0
-        puts "Inventory: " + inventory_array.join(', ')
-      else
-        puts "You have nothing. You should really be more careful with your things."
-      end
-    end
-
-    def word_in_inventory?(word)
-      puts "word: #{word}"
-      inventory_array.include? word.to_sym
-    end
-
-    def inventory_array
-      @inventory.keys
-    end
-
-    def show_status
-      puts @status_array[@status]
-    end
-
-  end
-
-
-
-  # :items includes both items and scenery (everything intereactive)
-  # takeable and nontakable
-
-  class Room
-    attr_accessor :reference, :name, :desc, :paths, :items
-
-    def initialize(room_hash)
-      @reference = room_hash[:reference]
-      @name = room_hash[:name]
-      @desc= room_hash[:desc]
-      @paths = room_hash[:paths]
-      @items = { }
-      item_array = room_hash[:items]
-      if item_array then populate_items(item_array) end
-    end
-
-    def pass_dungeon(dungeon_instance)
-      @items.values.each do |item|
-        item.pass_dungeon(dungeon_instance)
-      end
-    end
-
-    def full_description
-      "\n#{@name}\n #{@desc}"
-    end
-
-  ## room_hash[:items] is an array of hashes full of item features.
-  ## each room will have @items which is a hash, the key set to the item reference
-  ## and the value the actual item object
-
-  ##whats the point of not just having the item object itself in the array? this might make more sense
-
-    def populate_items(item_array)
-      item_array.each do |item|
-        @items[item[:reference]] = Item.new(item)
-      end
-    end
-
-    def add_item_to_room(item_ref, item_obj)
-      @items[item_ref] = item_obj
-    end
-
-    def word_in_room?(word)
-      item_array.include? word
-    end
-
-    def item_array
-      @items.keys
-    end
-
-    def show_items
-      if item_array.length == 0
-        puts "There's nothing here."
-      else
-        item_string = item_array.join(", ")
-        puts "Stuff in this room: #{item_string}"
-      end
-    end
-
-  end
-
-  # I think that inheritance doesn't make sense here, unless I am adding
-  # methods that inherit to some things and not others.
-
-  class Item
-    attr_accessor :reference, :name, :desc, :actions, :takeable, :dungeon
-
-    def initialize(info_hash)
-      @reference = info_hash[:reference]
-      @name = info_hash[:name]
-      @desc = info_hash[:desc]
-      @actions = [ ]
-      @takeable = info_hash[:takeable]
-      action_array = info_hash[:actions]
-      if action_array then populate_actions(action_array) end
-    end
-
-    def populate_actions(action_array)
-      action_array.each do |action|
-        @actions << Action.new(action)
-      end
-    end
-
-    def pass_dungeon(dungeon_instance)
-      @dungeon = dungeon_instance
-      @actions.each do |action|
-        action.set_dungeon(dungeon_instance)
-      end
-    end
-  end
-
-
-  class Action
-    attr_accessor :reference, :desc, :path, :status_change, :special_check, :fail_desc
-
-    def initialize(action_hash)
-      @reference = action_hash[:reference]
-      @desc = action_hash[:desc]
-      @path = action_hash[:path]
-      @status_change = action_hash[:status_change]
-      @special_check = action_hash[:special_check]
-      @fail_desc = action_hash[:fail_desc]
-      #if @special_check == nil then @special_check = true end
-    end
-
-    def set_dungeon(dungeon_instance)
-      @dungeon = dungeon_instance
-    end
-
-    def interpret_check(w2)
-      case @special_check
-      when nil
-        true
-      when :holding_this
-        @dungeon.player.word_in_inventory?(w2)
-      else
-        puts "You can't do that because the program doesn't know what #{@special_check} means."
-        return false
-      end
     end
   end
 end

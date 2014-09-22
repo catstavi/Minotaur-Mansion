@@ -9,19 +9,19 @@ module AdvGame
     def play
       puts "Running an Adventure Game!"
       name = get_name
-      @map = choose_map(name)
-      @my_dungeon = Dungeon.new_with_rooms(@map.room_array, name, @map.player_hash)
+      map = choose_map
+      @my_dungeon = Dungeon.new_with_rooms(map.room_array, name, map.player_hash)
       Dungeon.pass_dungeon(@my_dungeon)
-      @my_dungeon.start(@map.start_room)
-      while true
+      @my_dungeon.start(map.start_room)
+      loop do
         print "> "
         action = gets.chomp
         check_action(action)
       end
     end
 
-    def choose_map(name)
-      puts "Okay, #{name}, what adventure would you like to have?"
+    def choose_map
+      puts "Great! What adventure would you like to have?"
       puts "1. Minotaur Mansion"
       puts "2. Caves"
       print "> "
