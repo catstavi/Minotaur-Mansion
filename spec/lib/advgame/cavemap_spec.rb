@@ -28,6 +28,20 @@ describe AdvGame::CaveMap do
     end
   end
 
+  describe "#inventory" do
+    it "contains an array" do
+      expect(cavemap.player_hash[:inventory].class).to eq Array
+    end
+
+    it "contains hashes in the array" do
+      expect(cavemap.player_hash[:inventory][0].class).to eq Hash
+    end
+
+    it "has an array of hashes equal to those in the item hash set to the :inventory key" do
+      expect(cavemap.player_hash[:inventory]).to eq cavemap.items[:inventory]
+    end
+  end
+
   describe "#actions" do
     it "is a hash" do
       expect(cavemap.actions.class).to eq Hash
@@ -48,12 +62,24 @@ describe AdvGame::CaveMap do
       expect(cavemap.actions.keys - items).to eq []
     end
   end
+
+  describe "#items" do
+    it "is a hash" do
+      expect(cavemap.items.class).to eq Hash
+    end
+
+    it "values of the hash are arrays" do
+      expect(cavemap.items.values[0].class).to eq Array
+    end
+
+    it "contents of the arrays (in the values of the hash) are hashes" do
+      expect(cavemap.items.values[0][0].class).to eq Hash
+    end
+
+    it "keys of the item hash match room references in the room hash" do
+      rooms = cavemap.rooms.collect { |room_hash| room_hash[:reference] }
+      rooms << :inventory
+      expect(cavemap.items.keys - rooms).to eq []
+    end
+  end
 end
-
-
-
-  #
-  # describe "#inventory" do
-  #   it "is a hash" do
-  #     expect(cavemap.player_hash.class).to eq Hash
-  #   end
